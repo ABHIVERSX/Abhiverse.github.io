@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Abhiverse</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --void: #03050f;
+    --deep: #080d1e;
+    --nebula: #0d1a3a;
+    --pulse: #00d4ff;
+    --energy: #7b2fff;
+    --star: #ffffff;
+    --danger: #ff3a6e;
+    --gold: #ffd700;
+    --dim: #4a5a7a;
+  }
+
+  body {
+    background: var(--void);
+    font-family: 'Exo 2', sans-serif;
+    color: var(--star);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Starfield */
+  #stars-bg {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Screens */
+  .screen {
+    position: relative;
+    z-index: 10;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+  }
+  .screen.active { display: flex; }
+
+  /* ── TITLE SCREEN ── */
+  #title-screen {
+    gap: 0;
+  }
+  .logo-wrap {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .logo-abhi {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(48px, 10vw, 96px);
+    font-weight: 900;
+    letter-spacing: 6px;
+    background: linear-gradient(135deg, var(--pulse), var(--energy));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    filter: drop-shadow(0 0 30px rgba(0,212,255,0.5));
+  }
+  .logo-verse {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(48px, 10vw, 96px);
+    font-weight: 900;
+    letter-spacing: 6px;
+    background: linear-gradient(135deg, var(--energy), #ff6b9d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    filter: drop-shadow(0 0 30px rgba(123,47,255,0.5));
+  }
+  .tagline {
+    font-family: 'Exo 2', sans-serif;
+    font-size: 14px;
+    font-weight: 300;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-top: 12px;
+  }
+
+  .instructions {
+    background: rgba(0,212,255,0.04);
+    border: 1px solid rgba(0,212,255,0.15);
+    border-radius: 12px;
+    padding: 20px 32px;
+    margin-bottom: 36px;
+    text-align: center;
+    max-width: 400px;
+  }
+  .instructions h3 {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--pulse);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .instructions p {
+    font-size: 14px;
+    color: #8899bb;
+    line-height: 1.7;
+  }
+  .instructions span.key {
+    display: inline-block;
+    background: rgba(0,212,255,0.1);
+    border: 1px solid rgba(0,212,255,0.3);
+    border-radius: 4px;
+    padding: 1px 8px;
+    color: var(--pulse);
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+  }
+
+  .btn-start {
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--void);
+    background: linear-gradient(135deg, var(--pulse), var(--energy));
+    border: none;
+    border-radius: 50px;
+    padding: 16px 48px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 0 30px rgba(0,212,255,0.4);
+  }
+  .btn-start:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 50px rgba(0,212,255,0.6);
+  }
+
+  /* ── GAME SCREEN ── */
+  #game-screen {
+    padding: 0;
+  }
+
+  #hud {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 20;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 24px;
+    background: linear-gradient(to bottom, rgba(3,5,15,0.95), transparent);
+  }
+  .hud-block { text-align: center; min-width: 80px; }
+  .hud-label {
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+  .hud-value {
+    font-family: 'Orbitron', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--pulse);
+  }
+  #lives-display { color: var(--danger); font-size: 20px; letter-spacing: 4px; }
+
+  #game-canvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  /* ── GAME OVER SCREEN ── */
+  #gameover-screen { gap: 12px; }
+  .go-title {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(28px, 6vw, 52px);
+    font-weight: 900;
+    color: var(--danger);
+    letter-spacing: 4px;
+    text-shadow: 0 0 40px rgba(255,58,110,0.6);
+    margin-bottom: 8px;
+  }
+  .go-score-box {
+    background: rgba(0,212,255,0.05);
+    border: 1px solid rgba(0,212,255,0.2);
+    border-radius: 16px;
+    padding: 28px 48px;
+    text-align: center;
+    margin: 16px 0;
+  }
+  .go-score-label {
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .go-score-val {
+    font-family: 'Orbitron', monospace;
+    font-size: 56px;
+    font-weight: 900;
+    color: var(--pulse);
+  }
+  .go-best {
+    font-family: 'Exo 2', sans-serif;
+    font-size: 13px;
+    color: var(--gold);
+    letter-spacing: 2px;
+    margin-top: 4px;
+  }
+  .btn-restart {
+    font-family: 'Orbitron', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--void);
+    background: linear-gradient(135deg, var(--pulse), var(--energy));
+    border: none;
+    border-radius: 50px;
+    padding: 14px 40px;
+    cursor: pointer;
+    margin-top: 12px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 0 24px rgba(0,212,255,0.4);
+  }
+  .btn-restart:hover { transform: scale(1.05); }
+
+  /* Mobile touch buttons */
+  #touch-controls {
+    position: fixed;
+    bottom: 24px;
+    left: 0; right: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 24px;
+    z-index: 30;
+    pointer-events: none;
+  }
+  .touch-btn {
+    pointer-events: all;
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: rgba(0,212,255,0.1);
+    border: 2px solid rgba(0,212,255,0.3);
+    color: var(--pulse);
+    font-size: 28px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: background 0.1s;
+    backdrop-filter: blur(6px);
+  }
+  .touch-btn:active { background: rgba(0,212,255,0.25); }
+</style>
+</head>
+<body>
+
+<canvas id="stars-bg"></canvas>
+
+<!-- TITLE -->
+<div class="screen active" id="title-screen">
+  <div class="logo-wrap">
+    <div class="logo-abhi">ABHI</div>
+    <div class="logo-verse">VERSE</div>
+    <div class="tagline">Defend the cosmos</div>
+  </div>
+  <div class="instructions">
+    <h3>How to Play</h3>
+    <p>
+      Move your ship with <span class="key">←</span> <span class="key">→</span> arrow keys<br>
+      or drag on mobile.<br><br>
+      Catch <span style="color:#00d4ff">⬡ energy crystals</span> — avoid <span style="color:#ff3a6e">☄ asteroids</span>.<br>
+      You have 3 lives. Don't miss crystals!
+    </p>
+  </div>
+  <button class="btn-start" onclick="startGame()">LAUNCH</button>
+</div>
+
+<!-- GAME -->
+<div class="screen" id="game-screen">
+  <div id="hud">
+    <div class="hud-block">
+      <div class="hud-label">Score</div>
+      <div class="hud-value" id="hud-score">0</div>
+    </div>
+    <div class="hud-block">
+      <div class="hud-label">Lives</div>
+      <div id="lives-display">♥ ♥ ♥</div>
+    </div>
+    <div class="hud-block">
+      <div class="hud-label">Level</div>
+      <div class="hud-value" id="hud-level">1</div>
+    </div>
+  </div>
+  <canvas id="game-canvas"></canvas>
+  <div id="touch-controls">
+    <div class="touch-btn" id="btn-left">◀</div>
+    <div class="touch-btn" id="btn-right">▶</div>
+  </div>
+</div>
+
+<!-- GAME OVER -->
+<div class="screen" id="gameover-screen">
+  <div class="go-title">GAME OVER</div>
+  <div class="go-score-box">
+    <div class="go-score-label">Final Score</div>
+    <div class="go-score-val" id="go-score">0</div>
+    <div class="go-best" id="go-best"></div>
+  </div>
+  <button class="btn-restart" onclick="startGame()">PLAY AGAIN</button>
+  <button class="btn-restart" style="background:rgba(0,212,255,0.1);color:var(--pulse);box-shadow:none;border:1px solid rgba(0,212,255,0.3);margin-top:0" onclick="showTitle()">MENU</button>
+</div>
+
+<script>
+// ── STARFIELD ──
+const starCvs = document.getElementById('stars-bg');
+const sCtx = starCvs.getContext('2d');
+let stars = [];
+function resizeStars() {
+  starCvs.width = window.innerWidth;
+  starCvs.height = window.innerHeight;
+  stars = Array.from({length: 180}, () => ({
+    x: Math.random() * starCvs.width,
+    y: Math.random() * starCvs.height,
+    r: Math.random() * 1.4 + 0.2,
+    a: Math.random(),
+    s: Math.random() * 0.003 + 0.001
+  }));
+}
+function drawStars() {
+  sCtx.clearRect(0, 0, starCvs.width, starCvs.height);
+  stars.forEach(s => {
+    s.a += s.s;
+    if (s.a > 1) s.a = 0;
+    sCtx.beginPath();
+    sCtx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+    sCtx.fillStyle = `rgba(255,255,255,${0.3 + Math.sin(s.a*Math.PI)*0.7})`;
+    sCtx.fill();
+  });
+  requestAnimationFrame(drawStars);
+}
+resizeStars();
+drawStars();
+window.addEventListener('resize', resizeStars);
+
+// ── GAME ──
+const canvas = document.getElementById('game-canvas');
+const ctx = canvas.getContext('2d');
+
+let score, lives, level, objects, ship, keys, animId, frameCount, bestScore, gameRunning;
+bestScore = 0;
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function showTitle() { showScreen('title-screen'); }
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+
+function startGame() {
+  resizeCanvas();
+  score = 0; lives = 3; level = 1; objects = []; frameCount = 0; gameRunning = true;
+  keys = { left: false, right: false };
+
+  ship = {
+    x: canvas.width / 2,
+    y: canvas.height - 90,
+    w: 44, h: 52,
+    speed: 6,
+    trail: []
+  };
+
+  updateHUD();
+  showScreen('game-screen');
+  if (animId) cancelAnimationFrame(animId);
+  loop();
+}
+
+function updateHUD() {
+  document.getElementById('hud-score').textContent = score;
+  document.getElementById('hud-level').textContent = level;
+  const hearts = ['♥','♥','♥'].map((h,i) => `<span style="opacity:${i<lives?1:0.2}">${h}</span>`).join(' ');
+  document.getElementById('lives-display').innerHTML = hearts;
+}
+
+function spawnObject() {
+  const isCrystal = Math.random() < 0.55;
+  const size = isCrystal ? 22 : 28 + Math.random()*14;
+  objects.push({
+    x: Math.random() * (canvas.width - 60) + 30,
+    y: -size,
+    size,
+    type: isCrystal ? 'crystal' : 'asteroid',
+    speed: (1.5 + Math.random()*1.5 + level*0.3),
+    angle: Math.random()*Math.PI*2,
+    spin: (Math.random()-0.5)*0.08
+  });
+}
+
+function drawShip(x, y) {
+  ctx.save();
+  ctx.translate(x, y);
+
+  // Engine glow
+  const grd = ctx.createRadialGradient(0, 30, 2, 0, 30, 22);
+  grd.addColorStop(0, 'rgba(0,212,255,0.8)');
+  grd.addColorStop(1, 'rgba(0,212,255,0)');
+  ctx.fillStyle = grd;
+  ctx.fillRect(-18, 22, 36, 22);
+
+  // Body
+  ctx.beginPath();
+  ctx.moveTo(0, -26);
+  ctx.lineTo(20, 22);
+  ctx.lineTo(10, 16);
+  ctx.lineTo(0, 20);
+  ctx.lineTo(-10, 16);
+  ctx.lineTo(-20, 22);
+  ctx.closePath();
+  const bodyGrd = ctx.createLinearGradient(0, -26, 0, 22);
+  bodyGrd.addColorStop(0, '#00d4ff');
+  bodyGrd.addColorStop(1, '#7b2fff');
+  ctx.fillStyle = bodyGrd;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Cockpit
+  ctx.beginPath();
+  ctx.ellipse(0, -8, 7, 10, 0, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(180,230,255,0.7)';
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawCrystal(o) {
+  ctx.save();
+  ctx.translate(o.x, o.y);
+  ctx.rotate(o.angle);
+
+  const glow = ctx.createRadialGradient(0, 0, 2, 0, 0, o.size+8);
+  glow.addColorStop(0, 'rgba(0,212,255,0.4)');
+  glow.addColorStop(1, 'rgba(0,212,255,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(-o.size-8, -o.size-8, (o.size+8)*2, (o.size+8)*2);
+
+  ctx.beginPath();
+  for (let i=0; i<6; i++) {
+    const a = (i/6)*Math.PI*2;
+    const r = i%2===0 ? o.size : o.size*0.5;
+    i===0 ? ctx.moveTo(Math.cos(a)*r, Math.sin(a)*r) : ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
+  }
+  ctx.closePath();
+  const cg = ctx.createLinearGradient(-o.size, -o.size, o.size, o.size);
+  cg.addColorStop(0, '#00ffff');
+  cg.addColorStop(0.5, '#00d4ff');
+  cg.addColorStop(1, '#7b2fff');
+  ctx.fillStyle = cg;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawAsteroid(o) {
+  ctx.save();
+  ctx.translate(o.x, o.y);
+  ctx.rotate(o.angle);
+  ctx.beginPath();
+  const pts = 8;
+  for (let i=0; i<pts; i++) {
+    const a = (i/pts)*Math.PI*2;
+    const r = o.size * (0.7 + Math.sin(i*2.3+o.angle*0.5)*0.3);
+    i===0 ? ctx.moveTo(Math.cos(a)*r, Math.sin(a)*r) : ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
+  }
+  ctx.closePath();
+  const ag = ctx.createRadialGradient(0, 0, 0, 0, 0, o.size);
+  ag.addColorStop(0, '#7a4a2a');
+  ag.addColorStop(0.6, '#4a2a10');
+  ag.addColorStop(1, '#2a1005');
+  ctx.fillStyle = ag;
+  ctx.fill();
+  ctx.strokeStyle = '#ff3a6e44';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
+}
+
+// Particles
+let particles = [];
+function spawnParticles(x, y, color, count=12) {
+  for (let i=0; i<count; i++) {
+    const a = Math.random()*Math.PI*2;
+    const s = 2+Math.random()*4;
+    particles.push({ x, y, vx: Math.cos(a)*s, vy: Math.sin(a)*s, life:1, color });
+  }
+}
+function updateParticles() {
+  particles = particles.filter(p => p.life > 0);
+  particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy; p.vy += 0.05; p.life -= 0.04;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 3*p.life, 0, Math.PI*2);
+    ctx.fillStyle = p.color + Math.floor(p.life*255).toString(16).padStart(2,'0');
+    ctx.fill();
+  });
+}
+
+function loop() {
+  if (!gameRunning) return;
+  animId = requestAnimationFrame(loop);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  frameCount++;
+
+  // Spawn
+  const spawnRate = Math.max(28, 55 - level*4);
+  if (frameCount % spawnRate === 0) spawnObject();
+
+  // Level up
+  if (score > 0 && score % 150 === 0 && frameCount % 10 === 0) level = Math.floor(score/150)+1;
+
+  // Ship movement
+  if (keys.left) ship.x -= ship.speed + level*0.3;
+  if (keys.right) ship.x += ship.speed + level*0.3;
+  ship.x = Math.max(30, Math.min(canvas.width-30, ship.x));
+
+  // Trail
+  ship.trail.push({x: ship.x, y: ship.y});
+  if (ship.trail.length > 10) ship.trail.shift();
+  ship.trail.forEach((t,i) => {
+    ctx.beginPath();
+    ctx.arc(t.x, t.y+20, 3*(i/ship.trail.length), 0, Math.PI*2);
+    ctx.fillStyle = `rgba(0,212,255,${0.1*(i/ship.trail.length)})`;
+    ctx.fill();
+  });
+
+  // Objects
+  objects.forEach((o, idx) => {
+    o.y += o.speed;
+    o.angle += o.spin;
+
+    // Draw
+    if (o.type === 'crystal') drawCrystal(o);
+    else drawAsteroid(o);
+
+    // Collision with ship
+    const dx = o.x - ship.x, dy = o.y - ship.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    const hitR = o.type === 'crystal' ? o.size + 20 : o.size + 16;
+
+    if (dist < hitR) {
+      objects.splice(idx, 1);
+      if (o.type === 'crystal') {
+        score += 10 * level;
+        spawnParticles(o.x, o.y, '#00d4ff');
+      } else {
+        lives--;
+        spawnParticles(o.x, o.y, '#ff3a6e', 20);
+        if (lives <= 0) { endGame(); return; }
+      }
+      updateHUD();
+      return;
+    }
+
+    // Missed crystal
+    if (o.y > canvas.height + 40) {
+      objects.splice(idx, 1);
+      if (o.type === 'crystal') {
+        lives--;
+        if (lives <= 0) { endGame(); return; }
+        updateHUD();
+      }
+    }
+  });
+
+  updateParticles();
+  drawShip(ship.x, ship.y);
+}
+
+function endGame() {
+  gameRunning = false;
+  cancelAnimationFrame(animId);
+  if (score > bestScore) bestScore = score;
+  document.getElementById('go-score').textContent = score;
+  document.getElementById('go-best').textContent = bestScore > 0 ? `Best: ${bestScore}` : '';
+  showScreen('gameover-screen');
+}
+
+// ── CONTROLS ──
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft') keys.left = true;
+  if (e.key === 'ArrowRight') keys.right = true;
+});
+document.addEventListener('keyup', e => {
+  if (e.key === 'ArrowLeft') keys.left = false;
+  if (e.key === 'ArrowRight') keys.right = false;
+});
+
+// Touch / drag
+let touchX = null;
+canvas.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, {passive:true});
+canvas.addEventListener('touchmove', e => {
+  if (!gameRunning || touchX===null) return;
+  const dx = e.touches[0].clientX - touchX;
+  ship.x += dx * 1.2;
+  ship.x = Math.max(30, Math.min(canvas.width-30, ship.x));
+  touchX = e.touches[0].clientX;
+}, {passive:true});
+canvas.addEventListener('touchend', () => { touchX = null; });
+
+// Mobile buttons
+const btnL = document.getElementById('btn-left');
+const btnR = document.getElementById('btn-right');
+btnL.addEventListener('touchstart', () => { keys.left = true; }, {passive:true});
+btnL.addEventListener('touchend', () => { keys.left = false; });
+btnR.addEventListener('touchstart', () => { keys.right = true; }, {passive:true});
+btnR.addEventListener('touchend', () => { keys.right = false; });
+
+window.addEventListener('resize', () => { if(gameRunning) resizeCanvas(); });
+</script>
+</body>
+</html>
